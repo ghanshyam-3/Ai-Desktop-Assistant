@@ -65,7 +65,8 @@ const ParticleSphere = ({ amplitude = 0, status = 'idle', theme = 'dark' }) => {
             let targetHue = theme === 'dark' ? 180 : 220; // Cyan vs Blue
 
             if (status === 'listening') {
-                targetExp = 1.2 + (amplitude / 50); // React to voice
+                targetExp = 1.2 + (amplitude / 70); // React to voice
+                targetExp = Math.min(targetExp, 2.2); // Cap Max Size
                 targetSpd = 0.015;
                 targetHue = 180; // Cyan
             } else if (status === 'processing') {

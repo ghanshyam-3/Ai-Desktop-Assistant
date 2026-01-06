@@ -12,6 +12,10 @@ def run_services():
         print("Starting Browser Service on port 8002...")
         p2 = subprocess.Popen([sys.executable, "services/browser/main.py"], cwd=".")
         processes.append(p2)
+
+        print("Starting Email Service on port 8003...")
+        p3 = subprocess.Popen([sys.executable, "services/email/main.py"], cwd=".")
+        processes.append(p3)
         
         # Give them a moment to start
         time.sleep(2)

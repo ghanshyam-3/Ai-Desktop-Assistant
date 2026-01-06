@@ -78,7 +78,7 @@ function App() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-widest uppercase flex items-center gap-2">
-                                NEXUS <span className={`${theme === 'dark' ? 'text-cyan-400' : 'text-indigo-600'}`}>OS</span>
+                                AI <span className={`${theme === 'dark' ? 'text-cyan-400' : 'text-indigo-600'}`}>ASSISTANT</span>
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${status === 'listening' ? 'bg-cyan-400 text-cyan-400 animate-pulse' : 'bg-emerald-500 text-emerald-500'}`} />
@@ -105,10 +105,10 @@ function App() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 className={`text-3xl font-light tracking-[0.2em] uppercase ${status === 'listening'
-                                        ? 'text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]'
-                                        : status === 'processing'
-                                            ? 'text-violet-400 drop-shadow-[0_0_15px_rgba(167,139,250,0.8)]'
-                                            : theme === 'dark' ? 'text-gray-600' : 'text-slate-300'
+                                    ? 'text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]'
+                                    : status === 'processing'
+                                        ? 'text-violet-400 drop-shadow-[0_0_15px_rgba(167,139,250,0.8)]'
+                                        : theme === 'dark' ? 'text-gray-600' : 'text-slate-300'
                                     }`}
                             >
                                 {status === 'listening' ? "Listening..." : status === 'processing' ? "Processing..." : "Awaiting Command"}
@@ -120,8 +120,8 @@ function App() {
 
             {/* RIGHT: DASHBOARD PANEL (35% - Fixed Width) */}
             <aside className={`w-[450px] flex flex-col relative z-30 border-l backdrop-blur-2xl transition-all duration-300 ${theme === 'dark'
-                    ? 'bg-[#0E1220]/80 border-white/5 shadow-[-20px_0_40px_rgba(0,0,0,0.3)]'
-                    : 'bg-white/60 border-indigo-100 shadow-[-10px_0_30px_rgba(0,0,0,0.05)]'
+                ? 'bg-[#0E1220]/80 border-white/5 shadow-[-20px_0_40px_rgba(0,0,0,0.3)]'
+                : 'bg-white/60 border-indigo-100 shadow-[-10px_0_30px_rgba(0,0,0,0.05)]'
                 }`}>
 
                 {/* Top Tools */}
@@ -137,8 +137,8 @@ function App() {
                 {/* System Stats Card */}
                 <div className="px-6 pt-4 pb-2">
                     <div className={`p-5 rounded-2xl border ${theme === 'dark'
-                            ? 'bg-gradient-to-br from-white/5 to-transparent border-white/10'
-                            : 'bg-white border-indigo-50 shadow-sm'
+                        ? 'bg-gradient-to-br from-white/5 to-transparent border-white/10'
+                        : 'bg-white border-indigo-50 shadow-sm'
                         }`}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xs font-bold uppercase tracking-wider opacity-70 flex items-center gap-2">
@@ -180,15 +180,15 @@ function App() {
                                 className={`flex flex-col gap-1 ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                             >
                                 <span className="text-[10px] opacity-40 uppercase tracking-wider font-mono px-1">
-                                    {msg.sender === 'user' ? 'USER' : 'NEXUS'} • {msg.time}
+                                    {msg.sender === 'user' ? 'USER' : 'AI'} • {msg.time}
                                 </span>
                                 <div className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed max-w-[90%] shadow-lg backdrop-blur-md border ${msg.sender === 'user'
-                                        ? theme === 'dark'
-                                            ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-50 rounded-tr-sm'
-                                            : 'bg-indigo-600 text-white rounded-tr-sm shadow-indigo-200'
-                                        : theme === 'dark'
-                                            ? 'bg-white/5 border-white/10 text-gray-300 rounded-tl-sm'
-                                            : 'bg-white border-slate-100 text-slate-700 rounded-tl-sm shadow-sm'
+                                    ? theme === 'dark'
+                                        ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-50 rounded-tr-sm'
+                                        : 'bg-indigo-600 text-white rounded-tr-sm shadow-indigo-200'
+                                    : theme === 'dark'
+                                        ? 'bg-white/5 border-white/10 text-gray-300 rounded-tl-sm'
+                                        : 'bg-white border-slate-100 text-slate-700 rounded-tl-sm shadow-sm'
                                     }`}>
                                     {msg.text}
                                 </div>
@@ -201,8 +201,8 @@ function App() {
                 {/* Floating Command Bar */}
                 <div className="p-6 relative">
                     <div className={`relative flex items-center p-1.5 rounded-full border shadow-2xl transition-all ${theme === 'dark'
-                            ? 'bg-[#131726] border-white/10 focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
-                            : 'bg-white border-slate-200 focus-within:border-indigo-400 focus-within:shadow-xl'
+                        ? 'bg-[#131726] border-white/10 focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+                        : 'bg-white border-slate-200 focus-within:border-indigo-400 focus-within:shadow-xl'
                         }`}>
 
                         {/* Mic Button with Pulse Ring */}
@@ -213,8 +213,8 @@ function App() {
                             <Button
                                 size="icon"
                                 className={`rounded-full relative z-10 transition-colors ${status === 'listening'
-                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                        : theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-gray-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                                    : theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-gray-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                                     }`}
                                 onClick={handleMicClick}
                             >
@@ -236,8 +236,8 @@ function App() {
                             size="icon"
                             disabled={!inputText.trim()}
                             className={`rounded-full transition-all duration-300 ${inputText.trim()
-                                    ? theme === 'dark' ? 'bg-cyan-500 hover:bg-cyan-400 text-cyan-950' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                    : 'opacity-0 scale-90 pointer-events-none'
+                                ? theme === 'dark' ? 'bg-cyan-500 hover:bg-cyan-400 text-cyan-950' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                : 'opacity-0 scale-90 pointer-events-none'
                                 }`}
                             onClick={handleSendText}
                         >

@@ -37,9 +37,10 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"message": "NexusAI Orchestrator is running. Please use the React Frontend on Port 5173."}
+    return {"message": "AI-assistant Orchestrator is running. Please use the React Frontend on Port 5173."}
 BROWSER_SERVICE_URL = os.getenv("BROWSER_SERVICE_URL", "http://localhost:8002")
 SYSTEM_SERVICE_URL = os.getenv("SYSTEM_SERVICE_URL", "http://localhost:8001")
+EMAIL_SERVICE_URL = os.getenv("EMAIL_SERVICE_URL", "http://localhost:8003")
 
 # WebSocket Manager
 class ConnectionManager:
@@ -139,6 +140,37 @@ def execute_single_intent(intent):
             except Exception as e:
                 send_ui_log(f"Error: {e}", "error")
             send_ui_update("idle", "Done")
+
+    elif service == "email":
+        endpoint = ""
+        if action == "send_email":
+            endpoint = "/send-email"
+            send_ui_update("processing", f"Sending email to {params.get('recipient')}...")
+
+        if endpoint:
+            try:
+                # Add delay
+                time.sleep(1)
+                resp = requests.post(f"{EMAIL_SERVICE_URL}{endpoint}", json=params)
+                print(f"DEBUG: Email Service returned {resp.status_code}")
+                
+                try:
+                    data = resp.json()
+                    msg = data.get("message", "Email sent")
+                except:
+                    msg = "Email sent (no json)"
+
+                if resp.status_code == 200 and data.get("status") == "success":
+                   send_ui_log(msg, "system")
+                   speak("Email sent successfully.")
+                else:
+                   send_ui_log(f"Email Failed: {msg}", "error")
+                   speak("Failed to send email.")
+                
+                send_ui_update("idle", "Done")
+            except Exception as e:
+                send_ui_log(f"Error: {e}", "error")
+                speak("I couldn't reach the email service.")
 
     elif service == "browser":
         endpoint = ""
