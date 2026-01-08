@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import requests
+import sys
 import os
 from dotenv import load_dotenv
 from .llm import parse_command
@@ -20,24 +21,51 @@ async def lifespan(app: FastAPI):
     global main_loop
     main_loop = asyncio.get_running_loop()
     print("DEBUG: Main Loop captured.")
+    
+    # Start the Assistant Core Loop
+    from .core import core_loop
+    # Inject dependencies to avoid circular import
+    core_loop.set_dependencies(
+        ui_update_cb=send_ui_update,
+        ui_log_cb=send_ui_log,
+        intent_exec_cb=execute_single_intent,
+        ws_manager=manager
+    )
+    core_loop.start(main_loop)
+    
     yield
     print("Shutting down...")
+    core_loop.stop()
+
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Orchestrator Service", lifespan=lifespan)
 
 # Allow CORS for React Frontend (Vite default port 5173) and local file opening
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "tauri://localhost", "https://tauri.localhost"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Serve Frontend if built (Priority over root)
+# Check if running in PyInstaller bundle
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+    frontend_path = os.path.join(base_path, "frontend_dist")
+else:
+    # Check local dist
+    frontend_path = os.path.join(os.path.dirname(__file__), "frontend/dist")
 
-@app.get("/")
+if os.path.exists(frontend_path):
+    print(f"Serving frontend from {frontend_path}")
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+
+@app.get("/api/health")
 def home():
-    return {"message": "AI-assistant Orchestrator is running. Please use the React Frontend on Port 5173."}
+    return {"message": "AI-assistant Orchestrator is running."}
 BROWSER_SERVICE_URL = os.getenv("BROWSER_SERVICE_URL", "http://localhost:8002")
 SYSTEM_SERVICE_URL = os.getenv("SYSTEM_SERVICE_URL", "http://localhost:8001")
 EMAIL_SERVICE_URL = os.getenv("EMAIL_SERVICE_URL", "http://localhost:8003")
@@ -137,8 +165,10 @@ def execute_single_intent(intent):
                 data = resp.json()
                 msg = data.get("message", "Task completed")
                 send_ui_log(msg, "system")
+                speak(msg)
             except Exception as e:
                 send_ui_log(f"Error: {e}", "error")
+                speak("I encountered an error executing that task.")
             send_ui_update("idle", "Done")
 
     elif service == "email":
@@ -227,45 +257,10 @@ def process_command(command_text: str):
         # Handle single command
         execute_single_intent(intent)
 
-from .audio import speak, AudioRecorder
-
-# Global variable to track current recorder
-current_recorder = None
-
-def handle_voice_command():
-    global current_recorder
-    send_ui_update("listening", "Listening...")
-    
-    # Callback to stream volume to UI
-    volume_counter = 0
-    def volume_callback(amplitude):
-        nonlocal volume_counter
-        volume_counter += 1
-        # Throttle: Send only every 4th frame (approx 20-30ms delay) to save bandwidth/rendering
-        if volume_counter % 4 != 0:
-            return
-
-        # We broadcast the volume level (0-100 scale roughly)
-        if main_loop and main_loop.is_running():
-             asyncio.run_coroutine_threadsafe(
-                manager.broadcast({"type": "volume", "level": float(amplitude)}), 
-                main_loop
-            )
-
-    current_recorder = AudioRecorder(volume_callback=volume_callback)
-    text = current_recorder.listen()
-    current_recorder = None # Reset after done
-    
-    if text:
-        process_command(text)
-    else:
-        send_ui_update("idle", "Didn't hear anything.")
-
-
+from .core import core_loop
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    global current_recorder
     await manager.connect(websocket)
     try:
         while True:
@@ -273,13 +268,19 @@ async def websocket_endpoint(websocket: WebSocket):
             print(f"DEBUG: WS Received: {data}")
             
             if data == "start_listening":
-                # Run blocking listen in a separate thread to not block WS
-                threading.Thread(target=handle_voice_command, daemon=True).start()
+                # Manual override: Force start listening?
+                # For "Always On", this might mean "Listen NOW" (skip wake word)
+                # But current frontend sends this on button click.
+                # Ideally, we trigger the active listening state in core loop.
+                send_ui_update("listening", "Listening (Manual)...")
+                
+                # We need to signal the core loop to switch state.
+                # Since core loop is running in thread, we can just set state.
+                core_loop.state = "LISTENING"
 
             elif data == "stop_listening":
-                if current_recorder:
-                    print("DEBUG: Stopping recorder via WS command...")
-                    current_recorder.stop()
+                # Cancel current listening
+                core_loop.recorder.stop()
                 
             elif data.startswith("text_command:"):
                 command_text = data.split("text_command:")[1]
@@ -288,6 +289,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -35,8 +35,8 @@ def parse_command(command_text: str):
     Your Goal: Analyze the user's command and return a JSON ARRAY of actions.
 
     JSON STRUCTURE:
-    Every response MUST be a list of objects: [{"service": "...", "action": "...", "params": {...}}]
-
+    Every response MUST be a list of objects: [{"service": "...", "action": "...", "params": {...}, "expect_reply": false}]
+    
     SERVICES:
     - "system": for local apps (notepad, calculator, settings, etc.) or typing.
     - "browser": for websites, google searches, social media (WhatsApp).
@@ -47,7 +47,12 @@ def parse_command(command_text: str):
     - If the user asks a question (e.g., "What is Quantum Physics?", "Tell me a joke"), you MUST use "conversational".
     - The "response" parameter should contain a DETAILED, HELPFUL, and NATURAL answer, just like ChatGPT. 
     - Do NOT be brief. Explain things fully if asked. Use formatting like \n for new lines if needed in the JSON string.
-    - Example: {"service": "conversational", "response": "Quantum physics is the study of matter and energy at the most fundamental level..."}
+    - Example: {"service": "conversational", "response": "Quantum physics is the study of matter and energy...", "expect_reply": false}
+
+    CLARIFYING QUESTIONS / FOLLOW-UP:
+    - If you are missing information to perform an action (e.g. user says "Send email" but no recipient), you MUST ask for it.
+    - Set "expect_reply": true in the JSON.
+    - Example: {"service": "conversational", "response": "Who would you like to send the email to?", "expect_reply": true}
 
     SPECIFIC ACTIONS:
     - Open App: "system", "open_app", {"app_name": "..."}

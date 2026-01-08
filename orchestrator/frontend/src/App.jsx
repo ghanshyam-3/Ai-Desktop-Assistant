@@ -198,52 +198,10 @@ function App() {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Floating Command Bar */}
-                <div className="p-6 relative">
-                    <div className={`relative flex items-center p-1.5 rounded-full border shadow-2xl transition-all ${theme === 'dark'
-                        ? 'bg-[#131726] border-white/10 focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
-                        : 'bg-white border-slate-200 focus-within:border-indigo-400 focus-within:shadow-xl'
-                        }`}>
-
-                        {/* Mic Button with Pulse Ring */}
-                        <div className="relative">
-                            {status === 'listening' && (
-                                <span className={`absolute inset-0 rounded-full animate-ping opacity-75 ${theme === 'dark' ? 'bg-cyan-500' : 'bg-indigo-500'}`} />
-                            )}
-                            <Button
-                                size="icon"
-                                className={`rounded-full relative z-10 transition-colors ${status === 'listening'
-                                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                                    : theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-gray-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                                    }`}
-                                onClick={handleMicClick}
-                            >
-                                {status === 'listening' ? <StopCircle size={18} /> : <Mic size={18} />}
-                            </Button>
-                        </div>
-
-                        <form onSubmit={handleSendText} className="flex-1 px-4">
-                            <input
-                                type="text"
-                                placeholder="Ask or command anything..."
-                                className="w-full bg-transparent border-none outline-none text-sm font-medium placeholder:opacity-40 h-full"
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                            />
-                        </form>
-
-                        <Button
-                            size="icon"
-                            disabled={!inputText.trim()}
-                            className={`rounded-full transition-all duration-300 ${inputText.trim()
-                                ? theme === 'dark' ? 'bg-cyan-500 hover:bg-cyan-400 text-cyan-950' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                : 'opacity-0 scale-90 pointer-events-none'
-                                }`}
-                            onClick={handleSendText}
-                        >
-                            <Send size={16} />
-                        </Button>
-                    </div>
+                {/* Floating Command Bar - Removed for Visualizer-Only Mode */}
+                {/* <div className="p-6 relative">...</div> */}
+                <div className="p-6 text-center opacity-30 text-[10px] uppercase tracking-widest font-mono">
+                    Voice Activation Only
                 </div>
             </aside>
         </div>

@@ -37,12 +37,21 @@ const ParticleSphere = ({ amplitude = 0, status = 'idle', theme = 'dark' }) => {
                     vx: (Math.random() - 0.5) * 0.5,
                     vy: (Math.random() - 0.5) * 0.5,
                     vz: (Math.random() - 0.5) * 0.5,
+                    colorType: Math.floor(Math.random() * 4) // 0: Blue, 1: Red, 2: Yellow, 3: Green
                 });
             }
         }
 
         // Lerp Helper
         const lerp = (start, end, factor) => start + (end - start) * factor;
+
+        // Google Colors
+        const googleColors = [
+            { r: 66, g: 133, b: 244 }, // Blue
+            { r: 234, g: 67, b: 53 },  // Red
+            { r: 251, g: 188, b: 5 },  // Yellow
+            { r: 52, g: 168, b: 83 }   // Green
+        ];
 
         const render = () => {
             // Resize canvas
@@ -59,101 +68,99 @@ const ParticleSphere = ({ amplitude = 0, status = 'idle', theme = 'dark' }) => {
             // --- State Updates ---
             const s = stateRef.current;
 
+            // Initialize smooth transition vars if missing
+            if (s.currentMix === undefined) s.currentMix = 0;
+            if (s.currentRadiusMult === undefined) s.currentRadiusMult = 1.5;
+
             // 1. Calculate Targets based on Props
             let targetExp = 1;
             let targetSpd = 0.002;
-            let targetHue = theme === 'dark' ? 180 : 220; // Cyan vs Blue
+            let targetMix = 0; // 0 = Base Color, 1 = Google Colors
+            let targetRadMult = 1.5;
 
             if (status === 'listening') {
                 targetExp = 1.2 + (amplitude / 70); // React to voice
                 targetExp = Math.min(targetExp, 2.2); // Cap Max Size
                 targetSpd = 0.015;
-                targetHue = 180; // Cyan
+                targetMix = 1;
+                targetRadMult = 4.0;
             } else if (status === 'processing') {
-                targetExp = 0.9; // Contract slightly
+                targetExp = 0.9;
                 targetSpd = 0.04;
-                targetHue = 260; // Violet
+                targetMix = 0;
+                targetRadMult = 1.5;
             } else {
                 // Idle
-                targetExp = 1 + Math.sin(Date.now() / 2000) * 0.05; // Breathing
+                targetExp = 1 + Math.sin(Date.now() / 2000) * 0.05;
+                targetMix = 0;
+                targetRadMult = 1.5;
             }
 
             // 2. Smoothly Interpolate values
             s.currentExpansion = lerp(s.currentExpansion, targetExp, 0.05);
             s.currentSpeed = lerp(s.currentSpeed, targetSpd, 0.05);
+            s.currentMix = lerp(s.currentMix, targetMix, 0.1); // Color mix speed
+            s.currentRadiusMult = lerp(s.currentRadiusMult, targetRadMult, 0.1); // Radius change speed
 
             // Advance Rotation
             s.rotation += s.currentSpeed;
 
             // --- Rendering ---
-
-            // Project particles first to sort or just draw
-            // We need 3D coordinates after rotation to check distances for lines
             const projected = s.particles.map(p => {
-                // Rotate around Y axis
                 const rotX = p.x * Math.cos(s.rotation) - p.z * Math.sin(s.rotation);
                 const rotZ = p.x * Math.sin(s.rotation) + p.z * Math.cos(s.rotation);
-
-                // Rotate around X axis (tilt)
                 const tilt = 0.2;
                 const finalY = p.y * Math.cos(tilt) - rotZ * Math.sin(tilt);
                 const finalZ = p.y * Math.sin(tilt) + rotZ * Math.cos(tilt);
 
-                // Apply Expansion
                 const expX = rotX * s.currentExpansion;
                 const expY = finalY * s.currentExpansion;
                 const expZ = finalZ * s.currentExpansion;
 
-                // 3D Projection
-                const fov = 400; // Field of view
+                const fov = 400;
                 const scale = fov / (fov + expZ + baseRadius + 100);
 
                 return {
                     x: expX * scale + centerX,
                     y: expY * scale + centerY,
-                    z: expZ, // Keep Z for depth sorting/opacity
-                    scale: scale
+                    z: expZ,
+                    scale: scale,
+                    colorType: p.colorType
                 };
             });
 
-            // Draw Connections (Plexus Effect) - Only for close particles
-            // To save performance, we only check a subset or purely based on 2D proximity? 
-            // 2D proximity is faster and looks fine.
-
             ctx.lineWidth = 0.5;
 
-            // Optimization: Only draw lines if we are somewhat expanded or active, 
-            // or just always draw them but fade them out.
+            let baseR, baseG, baseB;
+            if (status === 'processing') { baseR = 167; baseG = 139; baseB = 250; } // Violet
+            else { baseR = 34; baseG = 211; baseB = 238; } // Cyan
+            if (theme !== 'dark' && status === 'idle') { baseR = 20; baseG = 30; baseB = 90; }
 
-            // Set Color
-            let r, g, b;
-            if (status === 'processing') { r = 167; g = 139; b = 250; } // Violet
-            else { r = 34; g = 211; b = 238; } // Cyan
-
-            // Light mode override
-            if (theme !== 'dark' && status === 'idle') { r = 20; g = 30; b = 90; }
-
-            // Draw Particles & Lines
             projected.forEach((p, i) => {
-                // Opacity based on Z (depth)
                 const alpha = Math.max(0.1, (p.scale - 0.5) * 2);
+
+                // Mix Particle Color
+                let targetR = baseR, targetG = baseG, targetB = baseB;
+
+                // Get target color if mixing
+                if (s.currentMix > 0.01) {
+                    const c = googleColors[p.colorType];
+                    // Lerp each channel towards Google color based on currentMix
+                    targetR = lerp(baseR, c.r, s.currentMix);
+                    targetG = lerp(baseG, c.g, s.currentMix);
+                    targetB = lerp(baseB, c.b, s.currentMix);
+                }
 
                 // Draw Point
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 1.5 * p.scale, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+                // Smooth radius transition
+                const radius = s.currentRadiusMult * p.scale;
+
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${Math.round(targetR)},${Math.round(targetG)},${Math.round(targetB)},${alpha})`;
                 ctx.fill();
 
-                // Draw Lines (The "3D Model" feel)
-                // Check neighbors. Simple optimization: only check next few particles? 
-                // No, that creates artifacts. Random check or spatial grid is best.
-                // For 600 particles, O(N^2) is 360,000 checks. Too slow for JS canvas 60fps? 
-                // Let's rely on random sampling or just checking indices nearby in the original array (since they are generated spherically).
-
-                // Better optimization: Only draw lines to particles that are physically close in the list 
-                // (Since we generated them roughly in order, this isn't perfect but faster).
-                // Or just brute force it but limit the inner loop range.
-
+                // Draw Lines using the calculated mixed color
                 for (let j = i + 1; j < particleCount; j++) {
                     const p2 = projected[j];
                     const dx = p.x - p2.x;
@@ -164,14 +171,10 @@ const ParticleSphere = ({ amplitude = 0, status = 'idle', theme = 'dark' }) => {
                         ctx.beginPath();
                         ctx.moveTo(p.x, p.y);
                         ctx.lineTo(p2.x, p2.y);
-                        // Line alpha based on distance
                         const lineAlpha = (1 - dist / (connectionDistance * s.currentExpansion)) * alpha * 0.5;
-                        ctx.strokeStyle = `rgba(${r},${g},${b},${lineAlpha})`;
+                        ctx.strokeStyle = `rgba(${Math.round(targetR)},${Math.round(targetG)},${Math.round(targetB)},${lineAlpha})`;
                         ctx.stroke();
                     }
-
-                    // Limit connections per particle to avoid hairball
-                    // if (j > i + 10) break; // This would look weird.
                 }
             });
 
