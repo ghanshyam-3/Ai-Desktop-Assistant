@@ -1,0 +1,17 @@
+future work
+
+Volume up/down   at specific level  (driver access)
+Mute (driver access)
+wifi on/off (driver access)
+bluetooth on/off (driver access)
+build for os know by user (like somtime we not delete any app reson of running process)
+
+mcp server for acessing web Controller
+
+add to task of pandding(UI)
+
+
+mcp for email
+
+
+A ot A  add
